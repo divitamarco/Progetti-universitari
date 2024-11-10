@@ -1,0 +1,1042 @@
+MPASM 5.86                PROGETTO_ESAME.ASM   7-18-2022  19:12:14         PAGE  1
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      00001 
+                      00002 #define SHOW_SLEEP  
+Warning[205]: Found directive in column 1. (list)
+                      00003 list p=16f887
+                      00004 #include <p16f887.inc>
+                      00001         LIST
+                      00002 
+                      00003 ;==========================================================================
+                      00004 ; Build date : Oct 24 2019
+                      00005 ;  MPASM PIC16F887 processor include
+                      00006 ; 
+                      00007 ;  (c) Copyright 1999-2019 Microchip Technology, All rights reserved
+                      00008 ;==========================================================================
+                      00009 
+                      00810         LIST
+                      00005     
+                      00006 ; configurazione
+                      00007     
+Warning[205]: Found directive in column 1. (__CONFIG)
+2007   2CF4           00008 __CONFIG _CONFIG1, _INTRC_OSC_NOCLKOUT & _CP_OFF & _WDT_OFF & _BOR_OFF & _PWRTE_OFF & _LVP_OFF & _DEBUG_
+                            OFF & _CPD_OFF
+                      00009     
+                      00010 ; costanti
+                      00011     
+  00000014            00012 tmp_max         EQU     .20
+  00007FFA            00013 tmr_1s          EQU     (.65536 - .32774)
+  0000003D            00014 tmr_50ms        EQU     (.256 - .195)
+  0000005F            00015 note            EQU     .95
+                      00016 
+                      00017                 
+                      00018 ; variabili
+                      00019     
+                      00020             UDATA_SHR
+0000                  00021 w_temp          RES             1                       
+0001                  00022 status_temp     RES             1                       
+0002                  00023 pclath_temp     RES             1
+0003                  00024 temp            RES             1
+0004                  00025 tmp             RES             1
+0005                  00026 temperature     RES             1
+0006                  00027 canSleep        RES             1
+0007                  00028 counter_led     RES             1
+0008                  00029 counter_minuto  RES             1
+0009                  00030 counter_alarm   RES             1
+                      00031         
+                      00032 ; inizio codice
+                      00033         
+                      00034 RST_VECTOR      CODE 0x0000
+0000   ???? ????      00035                 pagesel start
+0002   2???           00036                 goto start
+                      00037                 
+                      00038 MAIN            CODE
+0000                  00039 start
+0000   ???? ????      00040                 pagesel INIT_HW
+MPASM 5.86                PROGETTO_ESAME.ASM   7-18-2022  19:12:14         PAGE  2
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+0002   2???           00041                 call INIT_HW
+                      00042                 ; inizializzazione stato LED (tutti LED spenti)
+0003   1283 1303      00043                 banksel PORTD                   ; selezione banco RAM di PORTD
+0005   0188           00044                 clrf    PORTD
+                      00045                 ;loop minuto
+0006   303C           00046                 movlw .60
+0007   00??           00047                 movwf counter_minuto
+0008   ???? ????      00048                 pagesel reload_timer
+000A   2???           00049                 call    reload_timer
+                      00050                 ; abilita interrupt timer1
+000B   1683 1303      00051                 banksel PIE1                    ; contenente interrupt enable delle periferiche
+Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
+000D   140C           00052                 bsf     PIE1, TMR1IE            ; setta il bit interrupt enable associato al TIMER1
+                      00053                 ; Abilita gli interrupt delle periferiche aggiuntive (tra cui timer1)
+000E   170B           00054                 bsf     INTCON, PEIE            ; attivazione del PERIPHERICAL INTERRUPT ENABLE
+                      00055                 ; Abilita gli interrupt globalmente
+000F   178B           00056                 bsf     INTCON, GIE             ; attivazione del GLOBAL INTERRUPT ENABLE
+                      00057                 ; Inizialmente la CPU puo' andare in sleep (finché non avviene interrupt da una sorgente
+                             asincrona rispetto al clock interno)
+0010   1400           00058                 bsf     canSleep,0
+                      00059                 
+0011                  00060 main_loop      
+0011   1400           00061                 bsf canSleep,0
+0012                  00062 waitSleep       
+0012   138B           00063                 bcf INTCON, GIE
+0013   1800           00064                 btfsc canSleep,0                ; se = 1 va in sleep, se = 0 aspetta
+0014   2???           00065                 goto goSleep
+0015   178B           00066                 bsf INTCON, GIE
+0016   2???           00067                 goto waitSleep
+                      00068                 
+0017                  00069 goSleep         
+                      00070                                         #ifdef SHOW_SLEEP
+0017   1283 1303      00071                                         banksel PORTD
+0019   1188           00072                                         bcf     PORTD,3         ; spegne LED4 prima di sleep
+                      00073                                         #endif
+001A   0063           00074                 sleep
+001B   178B           00075                 bsf INTCON, GIE
+                      00076                 
+                      00077                                         #ifdef SHOW_SLEEP
+001C   1283 1303      00078                                         banksel PORTD
+001E   1588           00079                                         bsf             PORTD,3         ; accende LED4 dopo risveglio
+                      00080                                         #endif
+001F   2???           00081                 goto main_loop
+                      00082                 
+                      00083                 
+0020                  00084 reload_timer
+                      00085                         ; ricarica contatore timer1 per ricominciare conteggio.
+                      00086                         ; In modalita' asincrona, occorre arrestare il timer prima
+                      00087                         ; di aggiornare i due registri del contatore
+0020   1283 1303      00088                         banksel T1CON
+0022   1010           00089                         bcf     T1CON, TMR1ON   ; arresta timer
+                      00090                         ; le funzioni "low" e "high" forniscono il byte meno e piu'
+                      00091                         ;  significativo di una costante maggiore di 8 bit
+MPASM 5.86                PROGETTO_ESAME.ASM   7-18-2022  19:12:14         PAGE  3
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+0023   1283 1303      00092                         banksel TMR1L
+0025   30FA           00093                         movlw   low  tmr_1s
+0026   008E           00094                         movwf   TMR1L
+0027   307F           00095                         movlw   high tmr_1s
+0028   008F           00096                         movwf   TMR1H
+0029   100C           00097                         bcf     PIR1, TMR1IF            ; azzera flag interrupt
+002A   1283 1303      00098                         banksel T1CON
+002C   1410           00099                         bsf     T1CON, TMR1ON           ; riattiva timer
+002D   0008           00100                         return
+                      00101                                 
+002E                  00102 DELAY           
+002E   303D           00103                 movlw tmr_50ms
+002F   1283 1303      00104                 banksel TMR0
+0031   0081           00105                 movwf   TMR0                    
+0032   110B           00106                 bcf     INTCON,T0IF     
+0033                  00107 wait_delay      
+0033   1D0B           00108                 btfss   INTCON,T0IF             ; se il flag di overflow del timer è = 1, salta l'istruz
+                            ione seguente (interrupt generato)
+0034   2???           00109                 goto    wait_delay              ; ripeti il loop di attesa (POLLING)
+0035   0008           00110                 return
+                      00111                 
+                      00112 
+0036                  00113 INIT_HW     
+                      00114                 ; inizializzazione timer0
+0036   1683 1303      00115                 banksel OPTION_REG
+0038   3007           00116                 movlw B'00000111' ; bit 0-2 = 111 (prescaler timer0=256), bit3 = 0 (prescaler assegnato 
+                            a timer0), bit4=0 (low-to-high), bit5=0 (sorgente di clock interna)
+Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
+0039   0081           00117                 movwf OPTION_REG
+                      00118                 ; registro interrupt
+003A   018B           00119                 clrf INTCON
+                      00120                 ; porte I/O
+003B   1683 1303      00121                 banksel TRISD                   ; banco di TRISD, stesso banco anche per gli altri regis
+                            tri TRISx
+003D   30FB           00122                 movlw   B'11111011'             ; abilitazione del pin RC2 come output mode per il buzze
+                            r
+Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
+003E   0087           00123                 movwf   TRISC                   ; copia W (B'11111011') in TRISC -> RC2 COME OUTPUT PER 
+                            IL BUZZER (impostazione su TRISC perché user_RC2 è uno speaker pin di output, vedere su datashee
+003F   30F0           00124                 movlw   0xF0                    ; carica costante F0 in W
+Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
+0040   0088           00125                 movwf   TRISD                   ; primi 4 led in output mode
+                      00126                 ; ADC
+0041   1683 1703      00127                 banksel ANSELH                  ; banco di ANSELH
+Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
+0043   0189           00128                 clrf    ANSELH                  ; AN8..AN13 disattivati
+                      00129                 ; timer1
+0044   1283 1303      00130                 banksel T1CON                   ; registro di configurazione TIMER1
+0046   300E           00131                 movlw   B'00001110'             ; TMR1ON = 0 (spento), TMR1CS = 1 (esterna), T1SYNC = 1 
+                            (no sincronizzazione con clock interno), T1OSC = 1 (selezione oscillatore esterno), T1CKPS = 00 
+0047   0090           00132                 movwf   T1CON
+                      00133                 ; timer2 
+0048   1283 1303      00134                 banksel T2CON                   ; registro di configurazione TIMER2
+MPASM 5.86                PROGETTO_ESAME.ASM   7-18-2022  19:12:14         PAGE  4
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+004A   3003           00135                 movlw   B'00000011'             ; TMR2ON = 0 (off), TMR2PS = 11 (prescaler a 16), TOTPS 
+                            = 0000 (post scaler a 1)
+004B   0092           00136                 movwf   T2CON
+004C   1283 1303      00137                 banksel CCP1CON                 ; modulo CAPTURE-COMPARE-PWM a cui dire di lavorare in m
+                            odalità PWM
+004E   300C           00138                 movlw   B'00001100'             ; PWM mode CCP1M (bit 3-0) = 1100 (11 modalità pwm, 00 i
+                            n single output)
+004F   0097           00139                 movwf   CCP1CON
+0050   0008           00140                 return
+                      00141                 
+                      00142                 
+0051                  00143 readAdc
+0051   1283 1303      00144                 banksel ADCON0
+0053   141F           00145                 bsf ADCON0, ADON    ; attiva modulo ADC solo quando viene utilizzato
+0054   00??           00146                 movwf temp           ; salva W (canale) in tmp
+0055   1003           00147                 bcf STATUS,C        ; metto il carry a zero che lo shift fa entrare a destra
+0056   0D??           00148                 rlf temp,f           ; shift di tmp di 2 bit per scrivere
+0057   0D??           00149                 rlf temp,f           ;  il canale nel registro ADCON0
+0058   30C1           00150                 movlw B'11000001'   ; abilita gli altri bit necessari per usare
+0059   04??           00151                 iorwf temp,w         ;  oscillatore RC (OR tra w e variabile)
+005A   009F           00152                 movwf ADCON0        ; scrive registro ADCON0
+005B   149F           00153                 bsf ADCON0,GO       ; inizia conversione GO=1 (va settato a parte rispetto agli altri bi
+                            t del registro)
+005C                  00154 waitAdc
+005C   189F           00155                 btfsc ADCON0,GO     ; attendo che GO vada a 0
+005D   2???           00156                 goto waitAdc
+005E   1283 1303      00157                 banksel ADRESH
+0060   081E           00158                 movf ADRESH,w      ; copia valore campionato in W (risultato della conversione)
+0061   1283 1303      00159                 banksel ADCON0
+0063   101F           00160                 bcf ADCON0, ADON   ; disattiva modulo ADC
+0064   0008           00161                 return
+                      00162                 
+0065                  00163 computeTemp
+0065   00??           00164                 movwf tmp
+0066   301F           00165                 movlw .31
+0067   02??           00166                 subwf tmp, f  ; tmp = tmp - 31
+0068   1003           00167                 bcf STATUS, C ; metto il carry a zero perché nelle shift a sinistra quello che entra è i
+                            l contenuto del carry che quindi per non alterare il valore deve essere 0
+0069   0D??           00168                 rlf tmp, f    ; tmp = tmp * 2 (usando lo shift a sinistra)
+006A   01??           00169                 clrf temperature  ; valore iniziale del risultato finale = 0 (conto quante volte il 3 st
+                            a nel numero)
+006B                  00170 loop_div3
+006B   3003           00171                 movlw .3
+006C   02??           00172                 subwf tmp, w          ; w = tmp - 3
+006D   1C03           00173                 btfss STATUS, C       ; per vedere se il risultato è negativo controllo il carry = 0, se
+                             =1 il risultato non è negativo
+006E   2???           00174                 goto end_div3         ; se risultato negativo (C=0): fine divisione
+006F   00??           00175                 movwf tmp             ; tmp = tmp - 3
+0070   0A??           00176                 incf temperature, f   ; incrementa risultato di 1
+0071   2???           00177                 goto loop_div3        ; continua sottrazione
+0072                  00178 end_div3
+0072   08??           00179                 movf temperature, w
+0073   0008           00180                 return
+MPASM 5.86                PROGETTO_ESAME.ASM   7-18-2022  19:12:14         PAGE  5
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      00181         
+                      00182                 ; INTERRUPT
+                      00183                 
+                      00184                 
+                      00185 IRQ             CODE    0x0004
+0004                  00186 INTERRUPT
+                      00187                 ; salvataggio di contesto
+0004   00??           00188                 movwf   w_temp                  ; copia W in w_temp
+0005   0E03           00189                 swapf   STATUS,w                ; inverte i nibble di STATUS salvando il risultato in W.
+                      00190                                                 ; Questo trucco permette di copiare STATUS senza alterar
+                            lo
+                      00191                                                 ; (swapf e' una delle poche istruzioni che non alterano 
+                            i bit di stato).
+0006   00??           00192                 movwf   status_temp             ; copia W (= STATUS) in status_temp (con i nibble invert
+                            iti).
+0007   080A           00193                 movf    PCLATH,w                ; copia il registro PCLATH in W (registro da salvare per
+                            che' contiene i
+                      00194                                                 ; bit piu' significativi del program counter, usati da G
+                            OTO e CALL,
+                      00195                                                 ; e settati dalla direttiva pagesel).
+0008   00??           00196                 movwf   pclath_temp             ; copia W (= PCLATH) in pclath_temp.
+                      00197                 
+                      00198                 ; CODICE INTERRUPT
+0009                  00199 test_timer0     
+0009   1D0B           00200                 btfss   INTCON,T0IF             ; se il bit T0IF = 1 (c'e' stato un interrupt del timer)
+                            , salta istruzione seguente e serve interrupt
+000A   2???           00201                 goto    test_timer1             ; salta a test successivo
+000B   1E8B           00202                 btfss   INTCON, T0IE            ; controlla anche che l'interrupt fosse effettivamente a
+                            bilitato
+000C   2???           00203                 goto    test_timer1
+                      00204                 ; avvenuto interrupt timer0: termine Blink/Alarm
+000D   110B           00205                 bcf     INTCON, T0IF            ; azzera flag interrupt timer
+000E   128B           00206                 bcf     INTCON, T0IE            ; disabilita interrupt timer
+                      00207                 ; Verifichiamo se la PWM e' disattivata :   
+000F   1283 1303      00208                 banksel T2CON
+0011   1D12           00209                 btfss   T2CON, TMR2ON           ; se timer2 attivo, salta
+0012   1400           00210                 bsf     canSleep, 0             ; altrimenti abilita sleep
+0013   2???           00211                 goto    irq_end                 ; vai a fine routine di interrupt
+                      00212                 
+0014                  00213 test_timer1
+                      00214                 ; testa evento overflow timer1 (TMR1IF + TMR1IE)
+0014   1283 1303      00215                 banksel PIR1
+0016   1C0C           00216                 btfss   PIR1,TMR1IF
+0017   2???           00217                 goto    irq_end
+0018   1683 1303      00218                 banksel PIE1
+Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
+001A   1C0C           00219                 btfss   PIE1,TMR1IE
+001B   2???           00220                 goto    irq_end
+001C   1283 1303      00221                 banksel PIR1
+001E   100C           00222                 bcf     PIR1,TMR1IF
+001F   0B??           00223                 decfsz  counter_minuto,f
+0020   2???           00224                 goto reload
+                      00225                 ; avvenuto overflow timer1
+MPASM 5.86                PROGETTO_ESAME.ASM   7-18-2022  19:12:14         PAGE  6
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+0021   3019           00226                 movlw .25                 
+0022   00??           00227                 movwf counter_led
+0023   ???? ????      00228                 pagesel loop_blink
+0025   2???           00229                 call loop_blink
+0026   3006           00230                 movlw .6
+0027   ???? ????      00231                 pagesel readAdc
+0029   2???           00232                 call readAdc
+002A   ???? ????      00233                 pagesel computeTemp
+002C   2???           00234                 call computeTemp
+002D   3C14           00235                 sublw tmp_max                   ; w = soglia - temperatura
+002E   1803           00236                 btfsc STATUS, C                 ; per vedere se il risultato è negativo controllo il car
+                            ry = 0, se =1 il risultato non è negativo
+002F   2???           00237                 goto reload_counter             ; C=1, risultato non negativo, soglia non superata
+0030   3028           00238                 movlw .40
+0031   00??           00239                 movwf counter_alarm
+0032   ???? ????      00240                 pagesel loop_alarm
+0034   2???           00241                 goto loop_alarm
+                      00242                 
+0035                  00243 reload
+0035   ???? ????      00244                 pagesel reload_timer
+0037   2???           00245                 call reload_timer
+0038   2???           00246                 goto irq_end
+                      00247                         
+0039                  00248 loop_blink
+0039   0B??           00249                 decfsz counter_led, f
+003A   2???           00250                 goto blink_led
+003B   0008           00251                 return
+                      00252                 
+003C                  00253 blink_led
+003C   1283 1303      00254                 banksel PORTD
+003E   0188           00255                 clrf PORTD
+                      00256                 ;accendere
+003F   1408           00257                 bsf PORTD, 0
+0040   ???? ????      00258                 pagesel DELAY
+0042   2???           00259                 call DELAY
+                      00260                 ;spegnere
+0043   1008           00261                 bcf PORTD, 0
+0044   ???? ????      00262                 pagesel DELAY
+0046   2???           00263                 call DELAY
+0047   2???           00264                 goto loop_blink
+                      00265                 
+0048                  00266 loop_alarm 
+0048   0B??           00267                 decfsz counter_alarm, f
+0049   2???           00268                 goto delay_alarm
+004A   2???           00269                 goto stop_alarm
+                      00270                 
+004B                  00271 delay_alarm
+004B   ???? ????      00272                 pagesel play_alarm
+004D   2???           00273                 call play_alarm
+004E   ???? ????      00274                 pagesel DELAY
+0050   2???           00275                 call DELAY
+0051   ???? ????      00276                 pagesel DELAY
+0053   2???           00277                 call DELAY
+MPASM 5.86                PROGETTO_ESAME.ASM   7-18-2022  19:12:14         PAGE  7
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+0054   2???           00278                 goto loop_alarm
+0055                  00279 play_alarm              
+                      00280                 ; quando la soglia di temperatura viene superata e quindi il valore letto dal sensore
+                      00281                 ; è superiore alla soglia fissata viene fatto suonare un allarme.
+0055   305F           00282                 movlw note
+0056   1683 1303      00283                 banksel PR2
+Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
+0058   0092           00284                 movwf   PR2             ; PERIODO
+                      00285                 ; per ottenere un'onda quadra con duty-cycle al 50%,
+                      00286                 ; occorre settare CCPR1L alla meta' di PR2
+0059   1003           00287                 bcf     STATUS, C       ; azzera carry per successivo shift
+Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
+005A   0C12           00288                 rrf     PR2, w          ; W = PR2 shiftato a destra = meta' (rrleft divide per 2, rrrigh
+                            t moltiplica per 2)
+005B   1283 1303      00289                 banksel CCPR1L
+005D   0095           00290                 movwf   CCPR1L          ; ton
+                      00291                 ; attiva timer2 -> suono emesso da buzzer
+005E   1283 1303      00292                 banksel T2CON
+0060   1512           00293                 bsf     T2CON, TMR2ON   
+0061   0008           00294                 return
+                      00295                 
+0062                  00296 stop_alarm
+0062   1283 1303      00297                 banksel T2CON
+0064   1112           00298                 bcf T2CON, TMR2ON
+0065   0188           00299                 clrf PORTD
+                      00300         
+0066                  00301 reload_counter
+0066   303C           00302                 movlw .60
+0067   00??           00303                 movwf counter_minuto
+0068   ???? ????      00304                 pagesel reload_timer
+006A   2???           00305                 call reload_timer
+                      00306                 
+006B                  00307 irq_end         
+                      00308                 ; ripristino di contesto
+006B   08??           00309                 movf    pclath_temp,w           
+006C   008A           00310                 movwf   PCLATH                  
+006D   0E??           00311                 swapf   status_temp,w   
+006E   0083           00312                 movwf   STATUS                  
+006F   0E??           00313                 swapf   w_temp,f                
+0070   0E??           00314                 swapf   w_temp,w
+                      00315 
+0071   0009           00316                 retfie  
+                      00317                 
+                      00318                 
+                      00319                 
+2CF4                  00320                 END
+MPASM 5.86                PROGETTO_ESAME.ASM   7-18-2022  19:12:14         PAGE  8
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+ABDEN                             00000000
+ABDOVF                            00000007
+ACKDT                             00000005
+ACKEN                             00000004
+ACKSTAT                           00000006
+ADCON0                            0000001F
+ADCON1                            0000009F
+ADCS0                             00000006
+ADCS1                             00000007
+ADDEN                             00000003
+ADFM                              00000007
+ADIE                              00000006
+ADIF                              00000006
+ADON                              00000000
+ADRESH                            0000001E
+ADRESL                            0000009E
+ANS0                              00000000
+ANS1                              00000001
+ANS10                             00000002
+ANS11                             00000003
+ANS12                             00000004
+ANS13                             00000005
+ANS2                              00000002
+ANS3                              00000003
+ANS4                              00000004
+ANS5                              00000005
+ANS6                              00000006
+ANS7                              00000007
+ANS8                              00000000
+ANS9                              00000001
+ANSEL                             00000188
+ANSELH                            00000189
+BAUDCTL                           00000187
+BCLIE                             00000003
+BCLIF                             00000003
+BF                                00000000
+BRG0                              00000000
+BRG1                              00000001
+BRG10                             00000002
+BRG11                             00000003
+BRG12                             00000004
+BRG13                             00000005
+BRG14                             00000006
+BRG15                             00000007
+BRG16                             00000003
+BRG2                              00000002
+BRG3                              00000003
+BRG4                              00000004
+BRG5                              00000005
+BRG6                              00000006
+BRG7                              00000007
+BRG8                              00000000
+BRG9                              00000001
+MPASM 5.86                PROGETTO_ESAME.ASM   7-18-2022  19:12:14         PAGE  9
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+BRGH                              00000002
+C                                 00000000
+C1CH0                             00000000
+C1CH1                             00000001
+C1IE                              00000005
+C1IF                              00000005
+C1OE                              00000005
+C1ON                              00000007
+C1OUT                             00000006
+C1POL                             00000004
+C1R                               00000002
+C1RSEL                            00000005
+C1SEN                             00000005
+C2CH0                             00000000
+C2CH1                             00000001
+C2IE                              00000006
+C2IF                              00000006
+C2OE                              00000005
+C2ON                              00000007
+C2OUT                             00000006
+C2POL                             00000004
+C2R                               00000002
+C2REN                             00000004
+C2RSEL                            00000004
+C2SYNC                            00000000
+CCP1CON                           00000017
+CCP1IE                            00000002
+CCP1IF                            00000002
+CCP1M0                            00000000
+CCP1M1                            00000001
+CCP1M2                            00000002
+CCP1M3                            00000003
+CCP1X                             00000005
+CCP1Y                             00000004
+CCP2CON                           0000001D
+CCP2IE                            00000000
+CCP2IF                            00000000
+CCP2M0                            00000000
+CCP2M1                            00000001
+CCP2M2                            00000002
+CCP2M3                            00000003
+CCP2X                             00000005
+CCP2Y                             00000004
+CCPR1                             00000015
+CCPR1H                            00000016
+CCPR1L                            00000015
+CCPR2                             0000001B
+CCPR2H                            0000001C
+CCPR2L                            0000001B
+CHS0                              00000002
+CHS1                              00000003
+CHS2                              00000004
+CHS3                              00000005
+MPASM 5.86                PROGETTO_ESAME.ASM   7-18-2022  19:12:14         PAGE 10
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+CKE                               00000006
+CKP                               00000004
+CM1CON0                           00000107
+CM2CON0                           00000108
+CM2CON1                           00000109
+CREN                              00000004
+CSRC                              00000007
+D                                 00000005
+DATA_ADDRESS                      00000005
+DC                                00000001
+DC1B0                             00000004
+DC1B1                             00000005
+DC2B0                             00000004
+DC2B1                             00000005
+DELAY                             0000002E
+D_A                               00000005
+D_NOT_A                           00000005
+ECCPAS                            0000009C
+ECCPAS0                           00000004
+ECCPAS1                           00000005
+ECCPAS2                           00000006
+ECCPASE                           00000007
+EEADR                             0000010D
+EEADRH                            0000010F
+EECON1                            0000018C
+EECON2                            0000018D
+EEDAT                             0000010C
+EEDATA                            0000010C
+EEDATH                            0000010E
+EEIE                              00000004
+EEIF                              00000004
+EEPGD                             00000007
+F                                 00000001
+FERR                              00000002
+FSR                               00000004
+FVREN                             00000000
+GCEN                              00000007
+GIE                               00000007
+GO                                00000001
+GO_DONE                           00000001
+GO_NOT_DONE                       00000001
+HTS                               00000002
+I2C_DATA                          00000005
+I2C_READ                          00000002
+I2C_START                         00000003
+I2C_STOP                          00000004
+INDF                              00000000
+INIT_HW                           00000036
+INTCON                            0000000B
+INTE                              00000004
+INTEDG                            00000006
+INTERRUPT                         00000004
+INTF                              00000001
+MPASM 5.86                PROGETTO_ESAME.ASM   7-18-2022  19:12:14         PAGE 11
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+IOCB                              00000096
+IOCB0                             00000000
+IOCB1                             00000001
+IOCB2                             00000002
+IOCB3                             00000003
+IOCB4                             00000004
+IOCB5                             00000005
+IOCB6                             00000006
+IOCB7                             00000007
+IRCF0                             00000004
+IRCF1                             00000005
+IRCF2                             00000006
+IRP                               00000007
+LTS                               00000001
+MC1OUT                            00000007
+MC2OUT                            00000006
+MSK                               00000093
+MSK0                              00000000
+MSK1                              00000001
+MSK2                              00000002
+MSK3                              00000003
+MSK4                              00000004
+MSK5                              00000005
+MSK6                              00000006
+MSK7                              00000007
+NOT_A                             00000005
+NOT_ADDRESS                       00000005
+NOT_BO                            00000000
+NOT_BOR                           00000000
+NOT_DONE                          00000001
+NOT_PD                            00000003
+NOT_POR                           00000001
+NOT_RBPU                          00000007
+NOT_RC8                           00000006
+NOT_T1SYNC                        00000002
+NOT_TO                            00000004
+NOT_TX8                           00000006
+NOT_W                             00000002
+NOT_WRITE                         00000002
+OERR                              00000001
+OPTION_REG                        00000081
+OSCCON                            0000008F
+OSCTUNE                           00000090
+OSFIE                             00000007
+OSFIF                             00000007
+OSTS                              00000003
+P                                 00000004
+P1M0                              00000006
+P1M1                              00000007
+PCL                               00000002
+PCLATH                            0000000A
+PCON                              0000008E
+PDC0                              00000000
+MPASM 5.86                PROGETTO_ESAME.ASM   7-18-2022  19:12:14         PAGE 12
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+PDC1                              00000001
+PDC2                              00000002
+PDC3                              00000003
+PDC4                              00000004
+PDC5                              00000005
+PDC6                              00000006
+PEIE                              00000006
+PEN                               00000002
+PIE1                              0000008C
+PIE2                              0000008D
+PIR1                              0000000C
+PIR2                              0000000D
+PORTA                             00000005
+PORTB                             00000006
+PORTC                             00000007
+PORTD                             00000008
+PORTE                             00000009
+PR2                               00000092
+PRSEN                             00000007
+PS0                               00000000
+PS1                               00000001
+PS2                               00000002
+PSA                               00000003
+PSSAC0                            00000002
+PSSAC1                            00000003
+PSSBD0                            00000000
+PSSBD1                            00000001
+PSTRCON                           0000009D
+PULSR                             00000002
+PULSS                             00000003
+PWM1CON                           0000009B
+R                                 00000002
+RA0                               00000000
+RA1                               00000001
+RA2                               00000002
+RA3                               00000003
+RA4                               00000004
+RA5                               00000005
+RA6                               00000006
+RA7                               00000007
+RB0                               00000000
+RB1                               00000001
+RB2                               00000002
+RB3                               00000003
+RB4                               00000004
+RB5                               00000005
+RB6                               00000006
+RB7                               00000007
+RBIE                              00000003
+RBIF                              00000000
+RC0                               00000000
+RC1                               00000001
+RC2                               00000002
+MPASM 5.86                PROGETTO_ESAME.ASM   7-18-2022  19:12:14         PAGE 13
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+RC3                               00000003
+RC4                               00000004
+RC5                               00000005
+RC6                               00000006
+RC7                               00000007
+RC8_9                             00000006
+RC9                               00000006
+RCD8                              00000000
+RCEN                              00000003
+RCIDL                             00000006
+RCIE                              00000005
+RCIF                              00000005
+RCREG                             0000001A
+RCSTA                             00000018
+RD                                00000000
+RD0                               00000000
+RD1                               00000001
+RD2                               00000002
+RD3                               00000003
+RD4                               00000004
+RD5                               00000005
+RD6                               00000006
+RD7                               00000007
+RE0                               00000000
+RE1                               00000001
+RE2                               00000002
+RE3                               00000003
+READ_WRITE                        00000002
+RP0                               00000005
+RP1                               00000006
+RSEN                              00000001
+RX9                               00000006
+RX9D                              00000000
+R_NOT_W                           00000002
+R_W                               00000002
+S                                 00000003
+SBOREN                            00000004
+SCKP                              00000004
+SCS                               00000000
+SEN                               00000000
+SENDB                             00000003
+SHOW_SLEEP                        
+SMP                               00000007
+SPBRG                             00000099
+SPBRGH                            0000009A
+SPEN                              00000007
+SR0                               00000006
+SR1                               00000007
+SRCON                             00000185
+SREN                              00000005
+SSPADD                            00000093
+SSPBUF                            00000013
+SSPCON                            00000014
+MPASM 5.86                PROGETTO_ESAME.ASM   7-18-2022  19:12:14         PAGE 14
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+SSPCON2                           00000091
+SSPEN                             00000005
+SSPIE                             00000003
+SSPIF                             00000003
+SSPM0                             00000000
+SSPM1                             00000001
+SSPM2                             00000002
+SSPM3                             00000003
+SSPMSK                            00000093
+SSPOV                             00000006
+SSPSTAT                           00000094
+STATUS                            00000003
+STRA                              00000000
+STRB                              00000001
+STRC                              00000002
+STRD                              00000003
+STRSYNC                           00000004
+SWDTEN                            00000000
+SYNC                              00000004
+T0CS                              00000005
+T0IE                              00000005
+T0IF                              00000002
+T0SE                              00000004
+T1CKPS0                           00000004
+T1CKPS1                           00000005
+T1CON                             00000010
+T1GINV                            00000007
+T1GIV                             00000007
+T1GSS                             00000001
+T1INSYNC                          00000002
+T1OSCEN                           00000003
+T1SYNC                            00000002
+T2CKPS0                           00000000
+T2CKPS1                           00000001
+T2CON                             00000012
+TMR0                              00000001
+TMR0IE                            00000005
+TMR0IF                            00000002
+TMR1                              0000000E
+TMR1CS                            00000001
+TMR1GE                            00000006
+TMR1H                             0000000F
+TMR1IE                            00000000
+TMR1IF                            00000000
+TMR1L                             0000000E
+TMR1ON                            00000000
+TMR2                              00000011
+TMR2IE                            00000001
+TMR2IF                            00000001
+TMR2ON                            00000002
+TOUTPS0                           00000003
+TOUTPS1                           00000004
+TOUTPS2                           00000005
+MPASM 5.86                PROGETTO_ESAME.ASM   7-18-2022  19:12:14         PAGE 15
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+TOUTPS3                           00000006
+TRISA                             00000085
+TRISA0                            00000000
+TRISA1                            00000001
+TRISA2                            00000002
+TRISA3                            00000003
+TRISA4                            00000004
+TRISA5                            00000005
+TRISA6                            00000006
+TRISA7                            00000007
+TRISB                             00000086
+TRISB0                            00000000
+TRISB1                            00000001
+TRISB2                            00000002
+TRISB3                            00000003
+TRISB4                            00000004
+TRISB5                            00000005
+TRISB6                            00000006
+TRISB7                            00000007
+TRISC                             00000087
+TRISC0                            00000000
+TRISC1                            00000001
+TRISC2                            00000002
+TRISC3                            00000003
+TRISC4                            00000004
+TRISC5                            00000005
+TRISC6                            00000006
+TRISC7                            00000007
+TRISD                             00000088
+TRISD0                            00000000
+TRISD1                            00000001
+TRISD2                            00000002
+TRISD3                            00000003
+TRISD4                            00000004
+TRISD5                            00000005
+TRISD6                            00000006
+TRISD7                            00000007
+TRISE                             00000089
+TRISE0                            00000000
+TRISE1                            00000001
+TRISE2                            00000002
+TRISE3                            00000003
+TRMT                              00000001
+TUN0                              00000000
+TUN1                              00000001
+TUN2                              00000002
+TUN3                              00000003
+TUN4                              00000004
+TX8_9                             00000006
+TX9                               00000006
+TX9D                              00000000
+TXD8                              00000000
+TXEN                              00000005
+MPASM 5.86                PROGETTO_ESAME.ASM   7-18-2022  19:12:14         PAGE 16
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+TXIE                              00000004
+TXIF                              00000004
+TXREG                             00000019
+TXSTA                             00000098
+UA                                00000001
+ULPWUE                            00000005
+ULPWUIE                           00000002
+ULPWUIF                           00000002
+VCFG0                             00000004
+VCFG1                             00000005
+VR0                               00000000
+VR1                               00000001
+VR2                               00000002
+VR3                               00000003
+VRCON                             00000097
+VREN                              00000007
+VROE                              00000006
+VRR                               00000005
+VRSS                              00000004
+W                                 00000000
+WCOL                              00000007
+WDTCON                            00000105
+WDTPS0                            00000001
+WDTPS1                            00000002
+WDTPS2                            00000003
+WDTPS3                            00000004
+WPUB                              00000095
+WPUB0                             00000000
+WPUB1                             00000001
+WPUB2                             00000002
+WPUB3                             00000003
+WPUB4                             00000004
+WPUB5                             00000005
+WPUB6                             00000006
+WPUB7                             00000007
+WR                                00000001
+WREN                              00000002
+WRERR                             00000003
+WUE                               00000001
+Z                                 00000002
+_BOR21V                           00003EFF
+_BOR40V                           00003FFF
+_BOR4V_BOR21V                     00003EFF
+_BOR4V_BOR40V                     00003FFF
+_BOREN_NSLEEP                     00003EFF
+_BOREN_OFF                        00003CFF
+_BOREN_ON                         00003FFF
+_BOREN_SBODEN                     00003DFF
+_BOR_NSLEEP                       00003EFF
+_BOR_OFF                          00003CFF
+_BOR_ON                           00003FFF
+_BOR_SBODEN                       00003DFF
+_CONFIG1                          00002007
+MPASM 5.86                PROGETTO_ESAME.ASM   7-18-2022  19:12:14         PAGE 17
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+_CONFIG2                          00002008
+_CPD_OFF                          00003FFF
+_CPD_ON                           00003F7F
+_CP_OFF                           00003FFF
+_CP_ON                            00003FBF
+_DEBUG_OFF                        00003FFF
+_DEBUG_ON                         00001FFF
+_DEVID1                           00002006
+_EC_OSC                           00003FFB
+_EXTRC                            00003FFF
+_EXTRCIO                          00003FFE
+_EXTRC_OSC_CLKOUT                 00003FFF
+_EXTRC_OSC_NOCLKOUT               00003FFE
+_FCMEN_OFF                        000037FF
+_FCMEN_ON                         00003FFF
+_FOSC_EC                          00003FFB
+_FOSC_EXTRC_CLKOUT                00003FFF
+_FOSC_EXTRC_NOCLKOUT              00003FFE
+_FOSC_HS                          00003FFA
+_FOSC_INTRC_CLKOUT                00003FFD
+_FOSC_INTRC_NOCLKOUT              00003FFC
+_FOSC_LP                          00003FF8
+_FOSC_XT                          00003FF9
+_HS_OSC                           00003FFA
+_IDLOC0                           00002000
+_IDLOC1                           00002001
+_IDLOC2                           00002002
+_IDLOC3                           00002003
+_IESO_OFF                         00003BFF
+_IESO_ON                          00003FFF
+_INTOSC                           00003FFD
+_INTOSCIO                         00003FFC
+_INTRC_OSC_CLKOUT                 00003FFD
+_INTRC_OSC_NOCLKOUT               00003FFC
+_LP_OSC                           00003FF8
+_LVP_OFF                          00002FFF
+_LVP_ON                           00003FFF
+_MCLRE_OFF                        00003FDF
+_MCLRE_ON                         00003FFF
+_PWRTE_OFF                        00003FFF
+_PWRTE_ON                         00003FEF
+_WDTE_OFF                         00003FF7
+_WDTE_ON                          00003FFF
+_WDT_OFF                          00003FF7
+_WDT_ON                           00003FFF
+_WRT_1FOURTH                      00003BFF
+_WRT_256                          00003DFF
+_WRT_HALF                         000039FF
+_WRT_OFF                          00003FFF
+_XT_OSC                           00003FF9
+__16F887                          00000001
+blink_led                         0000003C
+canSleep                          00000006
+MPASM 5.86                PROGETTO_ESAME.ASM   7-18-2022  19:12:14         PAGE 18
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+computeTemp                       00000065
+counter_alarm                     00000009
+counter_led                       00000007
+counter_minuto                    00000008
+delay_alarm                       0000004B
+end_div3                          00000072
+goSleep                           00000017
+irq_end                           0000006B
+loop_alarm                        00000048
+loop_blink                        00000039
+loop_div3                         0000006B
+main_loop                         00000011
+note                              0000005F
+pclath_temp                       00000002
+play_alarm                        00000055
+readAdc                           00000051
+reload                            00000035
+reload_counter                    00000066
+reload_timer                      00000020
+start                             00000000
+status_temp                       00000001
+stop_alarm                        00000062
+temp                              00000003
+temperature                       00000005
+test_timer0                       00000009
+test_timer1                       00000014
+tmp                               00000004
+tmp_max                           00000014
+tmr_1s                            00007FFA
+tmr_50ms                          0000003D
+w_temp                            00000000
+waitAdc                           0000005C
+waitSleep                         00000012
+wait_delay                        00000033
+
+Errors   :     0
+Warnings :     2 reported,     0 suppressed
+Messages :     8 reported,     0 suppressed
+
+

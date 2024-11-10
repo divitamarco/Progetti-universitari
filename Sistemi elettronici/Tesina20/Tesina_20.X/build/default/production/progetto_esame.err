@@ -1,0 +1,10 @@
+Warning[205] D:\DESKTOP\SISTEMI\TESINA_20.X\PROGETTO_ESAME.ASM 3 : Found directive in column 1. (list)
+Warning[205] D:\DESKTOP\SISTEMI\TESINA_20.X\PROGETTO_ESAME.ASM 8 : Found directive in column 1. (__CONFIG)
+Message[302] D:\DESKTOP\SISTEMI\TESINA_20.X\PROGETTO_ESAME.ASM 52 : Register in operand not in bank 0.  Ensure that bank bits are correct.
+Message[302] D:\DESKTOP\SISTEMI\TESINA_20.X\PROGETTO_ESAME.ASM 117 : Register in operand not in bank 0.  Ensure that bank bits are correct.
+Message[302] D:\DESKTOP\SISTEMI\TESINA_20.X\PROGETTO_ESAME.ASM 123 : Register in operand not in bank 0.  Ensure that bank bits are correct.
+Message[302] D:\DESKTOP\SISTEMI\TESINA_20.X\PROGETTO_ESAME.ASM 125 : Register in operand not in bank 0.  Ensure that bank bits are correct.
+Message[302] D:\DESKTOP\SISTEMI\TESINA_20.X\PROGETTO_ESAME.ASM 128 : Register in operand not in bank 0.  Ensure that bank bits are correct.
+Message[302] D:\DESKTOP\SISTEMI\TESINA_20.X\PROGETTO_ESAME.ASM 219 : Register in operand not in bank 0.  Ensure that bank bits are correct.
+Message[302] D:\DESKTOP\SISTEMI\TESINA_20.X\PROGETTO_ESAME.ASM 284 : Register in operand not in bank 0.  Ensure that bank bits are correct.
+Message[302] D:\DESKTOP\SISTEMI\TESINA_20.X\PROGETTO_ESAME.ASM 288 : Register in operand not in bank 0.  Ensure that bank bits are correct.

@@ -1,0 +1,106 @@
+MPLINK 5.09, LINKER
+Linker Map File - Created Mon Jul 18 19:12:15 2022
+
+                                 Section Info
+                  Section       Type    Address   Location Size(Bytes)
+                ---------  ---------  ---------  ---------  ---------
+               RST_VECTOR       code   0x000000    program   0x000006
+                      IRQ       code   0x000004    program   0x0000dc
+                   .cinit    romdata   0x000072    program   0x000004
+                     MAIN       code   0x000074    program   0x0000e8
+.config_2007_BUILD/DEFAULT/PRODUCTION/PROGETT       code   0x002007    program   0x000002
+               .udata_shr      udata   0x000070       data   0x00000a
+
+
+
+                              Program Memory Usage 
+                               Start         End      
+                           ---------   ---------      
+                            0x000000    0x000002      
+                            0x000004    0x0000e7      
+                            0x002007    0x002007      
+            232 out of 8455 program addresses used, program memory utilization is 2%
+
+
+
+                              Symbols - Sorted by Name
+                     Name    Address   Location    Storage File                     
+                ---------  ---------  ---------  --------- ---------                
+                    DELAY   0x0000a2    program     static D:\Desktop\sistemi\Tesina_20.X\progetto_esame.asm
+                  INIT_HW   0x0000aa    program     static D:\Desktop\sistemi\Tesina_20.X\progetto_esame.asm
+                INTERRUPT   0x000004    program     static D:\Desktop\sistemi\Tesina_20.X\progetto_esame.asm
+                blink_led   0x00003c    program     static D:\Desktop\sistemi\Tesina_20.X\progetto_esame.asm
+              computeTemp   0x0000d9    program     static D:\Desktop\sistemi\Tesina_20.X\progetto_esame.asm
+              delay_alarm   0x00004b    program     static D:\Desktop\sistemi\Tesina_20.X\progetto_esame.asm
+                 end_div3   0x0000e6    program     static D:\Desktop\sistemi\Tesina_20.X\progetto_esame.asm
+                  goSleep   0x00008b    program     static D:\Desktop\sistemi\Tesina_20.X\progetto_esame.asm
+                  irq_end   0x00006b    program     static D:\Desktop\sistemi\Tesina_20.X\progetto_esame.asm
+               loop_alarm   0x000048    program     static D:\Desktop\sistemi\Tesina_20.X\progetto_esame.asm
+               loop_blink   0x000039    program     static D:\Desktop\sistemi\Tesina_20.X\progetto_esame.asm
+                loop_div3   0x0000df    program     static D:\Desktop\sistemi\Tesina_20.X\progetto_esame.asm
+                main_loop   0x000085    program     static D:\Desktop\sistemi\Tesina_20.X\progetto_esame.asm
+               play_alarm   0x000055    program     static D:\Desktop\sistemi\Tesina_20.X\progetto_esame.asm
+                  readAdc   0x0000c5    program     static D:\Desktop\sistemi\Tesina_20.X\progetto_esame.asm
+                   reload   0x000035    program     static D:\Desktop\sistemi\Tesina_20.X\progetto_esame.asm
+           reload_counter   0x000066    program     static D:\Desktop\sistemi\Tesina_20.X\progetto_esame.asm
+             reload_timer   0x000094    program     static D:\Desktop\sistemi\Tesina_20.X\progetto_esame.asm
+                    start   0x000074    program     static D:\Desktop\sistemi\Tesina_20.X\progetto_esame.asm
+               stop_alarm   0x000062    program     static D:\Desktop\sistemi\Tesina_20.X\progetto_esame.asm
+              test_timer0   0x000009    program     static D:\Desktop\sistemi\Tesina_20.X\progetto_esame.asm
+              test_timer1   0x000014    program     static D:\Desktop\sistemi\Tesina_20.X\progetto_esame.asm
+                  waitAdc   0x0000d0    program     static D:\Desktop\sistemi\Tesina_20.X\progetto_esame.asm
+                waitSleep   0x000086    program     static D:\Desktop\sistemi\Tesina_20.X\progetto_esame.asm
+               wait_delay   0x0000a7    program     static D:\Desktop\sistemi\Tesina_20.X\progetto_esame.asm
+                 canSleep   0x000076       data     static D:\Desktop\sistemi\Tesina_20.X\progetto_esame.asm
+            counter_alarm   0x000079       data     static D:\Desktop\sistemi\Tesina_20.X\progetto_esame.asm
+              counter_led   0x000077       data     static D:\Desktop\sistemi\Tesina_20.X\progetto_esame.asm
+           counter_minuto   0x000078       data     static D:\Desktop\sistemi\Tesina_20.X\progetto_esame.asm
+              pclath_temp   0x000072       data     static D:\Desktop\sistemi\Tesina_20.X\progetto_esame.asm
+              status_temp   0x000071       data     static D:\Desktop\sistemi\Tesina_20.X\progetto_esame.asm
+                     temp   0x000073       data     static D:\Desktop\sistemi\Tesina_20.X\progetto_esame.asm
+              temperature   0x000075       data     static D:\Desktop\sistemi\Tesina_20.X\progetto_esame.asm
+                      tmp   0x000074       data     static D:\Desktop\sistemi\Tesina_20.X\progetto_esame.asm
+                   w_temp   0x000070       data     static D:\Desktop\sistemi\Tesina_20.X\progetto_esame.asm
+
+
+
+                              Symbols - Sorted by Address
+                     Name    Address   Location    Storage File                     
+                ---------  ---------  ---------  --------- ---------                
+                INTERRUPT   0x000004    program     static D:\Desktop\sistemi\Tesina_20.X\progetto_esame.asm
+              test_timer0   0x000009    program     static D:\Desktop\sistemi\Tesina_20.X\progetto_esame.asm
+              test_timer1   0x000014    program     static D:\Desktop\sistemi\Tesina_20.X\progetto_esame.asm
+                   reload   0x000035    program     static D:\Desktop\sistemi\Tesina_20.X\progetto_esame.asm
+               loop_blink   0x000039    program     static D:\Desktop\sistemi\Tesina_20.X\progetto_esame.asm
+                blink_led   0x00003c    program     static D:\Desktop\sistemi\Tesina_20.X\progetto_esame.asm
+               loop_alarm   0x000048    program     static D:\Desktop\sistemi\Tesina_20.X\progetto_esame.asm
+              delay_alarm   0x00004b    program     static D:\Desktop\sistemi\Tesina_20.X\progetto_esame.asm
+               play_alarm   0x000055    program     static D:\Desktop\sistemi\Tesina_20.X\progetto_esame.asm
+               stop_alarm   0x000062    program     static D:\Desktop\sistemi\Tesina_20.X\progetto_esame.asm
+           reload_counter   0x000066    program     static D:\Desktop\sistemi\Tesina_20.X\progetto_esame.asm
+                  irq_end   0x00006b    program     static D:\Desktop\sistemi\Tesina_20.X\progetto_esame.asm
+                    start   0x000074    program     static D:\Desktop\sistemi\Tesina_20.X\progetto_esame.asm
+                main_loop   0x000085    program     static D:\Desktop\sistemi\Tesina_20.X\progetto_esame.asm
+                waitSleep   0x000086    program     static D:\Desktop\sistemi\Tesina_20.X\progetto_esame.asm
+                  goSleep   0x00008b    program     static D:\Desktop\sistemi\Tesina_20.X\progetto_esame.asm
+             reload_timer   0x000094    program     static D:\Desktop\sistemi\Tesina_20.X\progetto_esame.asm
+                    DELAY   0x0000a2    program     static D:\Desktop\sistemi\Tesina_20.X\progetto_esame.asm
+               wait_delay   0x0000a7    program     static D:\Desktop\sistemi\Tesina_20.X\progetto_esame.asm
+                  INIT_HW   0x0000aa    program     static D:\Desktop\sistemi\Tesina_20.X\progetto_esame.asm
+                  readAdc   0x0000c5    program     static D:\Desktop\sistemi\Tesina_20.X\progetto_esame.asm
+                  waitAdc   0x0000d0    program     static D:\Desktop\sistemi\Tesina_20.X\progetto_esame.asm
+              computeTemp   0x0000d9    program     static D:\Desktop\sistemi\Tesina_20.X\progetto_esame.asm
+                loop_div3   0x0000df    program     static D:\Desktop\sistemi\Tesina_20.X\progetto_esame.asm
+                 end_div3   0x0000e6    program     static D:\Desktop\sistemi\Tesina_20.X\progetto_esame.asm
+                   w_temp   0x000070       data     static D:\Desktop\sistemi\Tesina_20.X\progetto_esame.asm
+              status_temp   0x000071       data     static D:\Desktop\sistemi\Tesina_20.X\progetto_esame.asm
+              pclath_temp   0x000072       data     static D:\Desktop\sistemi\Tesina_20.X\progetto_esame.asm
+                     temp   0x000073       data     static D:\Desktop\sistemi\Tesina_20.X\progetto_esame.asm
+                      tmp   0x000074       data     static D:\Desktop\sistemi\Tesina_20.X\progetto_esame.asm
+              temperature   0x000075       data     static D:\Desktop\sistemi\Tesina_20.X\progetto_esame.asm
+                 canSleep   0x000076       data     static D:\Desktop\sistemi\Tesina_20.X\progetto_esame.asm
+              counter_led   0x000077       data     static D:\Desktop\sistemi\Tesina_20.X\progetto_esame.asm
+           counter_minuto   0x000078       data     static D:\Desktop\sistemi\Tesina_20.X\progetto_esame.asm
+            counter_alarm   0x000079       data     static D:\Desktop\sistemi\Tesina_20.X\progetto_esame.asm
+
+
